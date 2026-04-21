@@ -1,30 +1,23 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:web_socket_channel/web_socket_channel.dart';
 
-void main() => runApp(MyApp());
+void main() => runApp(const MyApp());
 
 class MyApp extends StatefulWidget {
+  const MyApp({super.key});
+
   @override
-  _MyAppState createState() => _MyAppState();
+  State<MyApp> createState() => _MyAppState();
 }
 
 class _MyAppState extends State<MyApp> {
-  int _counter = 0;
-  Timer? _timer;
-
-  @override
-  void initState() {
-    super.initState();
-    _timer = Timer.periodic(Duration(seconds: 1), (timer) {
-      setState(() {
-        _counter++;
-      });
-    });
-  }
+  final _channel = WebSocketChannel.connect(
+    Uri.parse('ws://localhost:12345/ws'),
+  );
 
   @override
   void dispose() {
-    _timer?.cancel();
+    _channel.sink.close();
     super.dispose();
   }
 
@@ -32,12 +25,15 @@ class _MyAppState extends State<MyApp> {
   Widget build(BuildContext context) {
     return MaterialApp(
       home: Scaffold(
+        backgroundColor: Colors.white,
         body: Center(
-          child: Text(
-            '$_counter',
-            style: TextStyle(fontSize: 48),
-          ),
-        ),
+          child: StreamBuilder(
+              stream: _channel.stream,
+              builder: (context, snapshot) {
+                return Text(snapshot.hasData ? '${snapshot.data}' : 'nothing');
+              },
+            ),
+        )
       ),
     );
   }
